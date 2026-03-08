@@ -89,13 +89,26 @@ async def search_job(ctx, *, args: str = ""):
 
 @bot.command(name="aide")
 async def aide(ctx):
-    await ctx.send("""Bot Emploi - Aide
-
-!search_job --type [metier] --loc [ville]
--> Joindre votre CV en PDF
--> Ex : !search_job --type "Data Science" --loc Strasbourg
-
-!aide -> Affiche ce message""")
+    embed = discord.Embed(
+        title="Bot Emploi - Aide",
+        description="Recherchez des offres d'emploi et generez des lettres de motivation.",
+        color=discord.Color.blue()
+    )
+    embed.add_field(
+        name="!search_job",
+        value="Recherche des offres et genere une lettre de motivation.\n"
+              "**Usage :** `!search_job --type [metier] --loc [ville]`\n"
+              "**Exemple :** `!search_job --type Data Science --loc Strasbourg`\n"
+              "Joindre le CV en PDF en piece jointe.",
+        inline=False
+    )
+    embed.add_field(
+        name="!aide",
+        value="Affiche ce message.",
+        inline=False
+    )
+    embed.set_footer(text="Pensez a joindre votre CV en PDF lors de la commande !search_job")
+    await ctx.send(embed=embed)
 
 
 if __name__ == "__main__":
