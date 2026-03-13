@@ -18,6 +18,8 @@ Format de retour attendu par bot.py :
 def scrape_offers(job_type: str, location: str) -> list:
     """
     TODO Groupe 2 : implémenter avec Selenium
+
+    
     """
     offers = []
     return offers
