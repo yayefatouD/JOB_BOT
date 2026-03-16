@@ -126,19 +126,9 @@ def get_description_text(driver) -> str:
 
 def scrape_offers(job_type: str, location: str) -> list:
     """
-    Recherche des offres LinkedIn et retourne une liste de dictionnaires
-    au format attendu par le groupe 1.
+    TODO Groupe 2 : implémenter avec Selenium
 
-    Format :
-    [
-        {
-            "title": "...",
-            "company": "...",
-            "location": "...",
-            "description": "...",
-            "url": "..."
-        }
-    ]
+    
     """
     offers = []
     driver = None
