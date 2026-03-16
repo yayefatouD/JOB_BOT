@@ -86,7 +86,7 @@ def close_popups(driver) -> None:
             )
             btn.click()
             break
-        except:
+        except Exception:
             pass
 
     time.sleep(1)
