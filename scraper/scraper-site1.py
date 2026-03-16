@@ -9,7 +9,7 @@ Format de retour attendu par bot.py :
         "location": "Ville",
         "description": "Description complète",
         "url": "lien vers l'offre"
-    },
+    }, 
     ...
 ]
 """
