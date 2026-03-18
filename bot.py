@@ -86,6 +86,11 @@ async def search_job(ctx, *, args: str = ""):
         except Exception as e:
             await ctx.send(f"Erreur LLM offre {i+1} : {e}")
 
+@bot.command(name="ping")
+async def ping(ctx):
+    latence = round(bot.latency * 1000)
+    await ctx.send(f"Pong ! Latence : {latence}ms")
+
 
 @bot.command(name="aide")
 async def aide(ctx):
@@ -105,6 +110,11 @@ async def aide(ctx):
     embed.add_field(
         name="!aide",
         value="Affiche ce message.",
+        inline=False
+    )
+    embed.add_field(
+        name="!ping",
+        value="Verifie que le bot est en ligne et affiche la latence.",
         inline=False
     )
     embed.set_footer(text="Pensez a joindre votre CV en PDF lors de la commande !search_job")
