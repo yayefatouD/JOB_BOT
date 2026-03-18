@@ -42,7 +42,7 @@ async def search_job(ctx, *, args: str = ""):
             if attachment.filename.endswith(".pdf"):
                 await ctx.send("CV detecte, extraction en cours...")
                 pdf_bytes = await attachment.read()
-                try
+                try:
                     from cv_parser.pdf_parser import extract_text_from_pdf
                     cv_text = extract_text_from_pdf(pdf_bytes)
                     await ctx.send("CV extrait avec succes.")
