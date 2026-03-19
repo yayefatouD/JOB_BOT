@@ -9,7 +9,7 @@ Format de retour attendu par bot.py :
         "location": "Ville",
         "description": "Description complète",
         "url": "lien vers l'offre"
-    }, 
+    },
     ...
 ]
 """
@@ -22,6 +22,9 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+
+MAX_OFFERS = 5
 
 
 def clean_text(text: str) -> str:
@@ -45,7 +48,7 @@ def safe_text(parent, selectors) -> str:
             text_content = (el.get_attribute("textContent") or "").strip()
             if text_content:
                 return clean_text(text_content)
-        except:
+        except Exception:
             pass
     return ""
 
@@ -66,7 +69,7 @@ def close_popups(driver) -> None:
             )
             btn.click()
             break
-        except:
+        except Exception:
             pass
 
     time.sleep(1)
@@ -93,9 +96,7 @@ def close_popups(driver) -> None:
 
 
 def get_description_text(driver) -> str:
-    """
-    Récupère la description d'une offre depuis la page de détail LinkedIn.
-    """
+    """Récupère la description d'une offre depuis la page de détail LinkedIn."""
     selectors = [
         "div.show-more-less-html__markup",
         "div.description__text",
@@ -117,116 +118,7 @@ def get_description_text(driver) -> str:
             text_content = (el.get_attribute("textContent") or "").strip()
             if text_content:
                 return clean_text(text_content)
-        except:
-            pass
-
-    return ""
-
-
-from urllib.parse import quote
-import time
-
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
-
-def clean_text(text: str) -> str:
-    """Nettoie un texte en supprimant les espaces et retours inutiles."""
-    return " ".join(text.split()) if text else ""
-
-
-def safe_text(parent, selectors) -> str:
-    """
-    Essaie plusieurs sélecteurs CSS pour récupérer le texte d'un élément.
-    Retourne une chaîne vide si rien n'est trouvé.
-    """
-    for selector in selectors:
-        try:
-            el = parent.find_element(By.CSS_SELECTOR, selector)
-
-            text = el.text.strip()
-            if text:
-                return clean_text(text)
-
-            text_content = (el.get_attribute("textContent") or "").strip()
-            if text_content:
-                return clean_text(text_content)
-        except:
-            pass
-    return ""
-
-
-def close_popups(driver) -> None:
-    """Ferme les popups cookies et identification si elles apparaissent."""
-    cookie_xpaths = [
-        "//button[contains(., 'Accepter')]",
-        "//button[contains(., 'Accept')]",
-        "//button[contains(., 'Tout accepter')]",
-        "//button[contains(., 'Refuser')]",
-    ]
-
-    for xp in cookie_xpaths:
-        try:
-            btn = WebDriverWait(driver, 2).until(
-                EC.element_to_be_clickable((By.XPATH, xp))
-            )
-            btn.click()
-            break
-        except:
-            pass
-
-    time.sleep(1)
-
-    close_xpaths = [
-        "//button[@aria-label='Dismiss']",
-        "//button[@aria-label='Fermer']",
-        "//button[@aria-label='Close']",
-        "//button[contains(@class, 'contextual-sign-in-modal__modal-dismiss-icon')]",
-        "//button[contains(@class, 'modal__dismiss')]",
-    ]
-
-    for xp in close_xpaths:
-        try:
-            btn = WebDriverWait(driver, 2).until(
-                EC.element_to_be_clickable((By.XPATH, xp))
-            )
-            btn.click()
-            break
-        except:
-            pass
-
-    time.sleep(1)
-
-
-def get_description_text(driver) -> str:
-    """
-    Récupère la description d'une offre depuis la page de détail LinkedIn.
-    """
-    selectors = [
-        "div.show-more-less-html__markup",
-        "div.description__text",
-        "section.show-more-less-html",
-        "div.jobs-description__content",
-        "div.jobs-box__html-content",
-    ]
-
-    for selector in selectors:
-        try:
-            el = WebDriverWait(driver, 5).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, selector))
-            )
-
-            text = el.text.strip()
-            if text:
-                return clean_text(text)
-
-            text_content = (el.get_attribute("textContent") or "").strip()
-            if text_content:
-                return clean_text(text_content)
-        except:
+        except Exception:
             pass
 
     return ""
@@ -234,9 +126,8 @@ def get_description_text(driver) -> str:
 
 def scrape_offers(job_type: str, location: str) -> list:
     """
-    TODO Groupe 2 : implémenter avec Selenium
-
-    
+    Scrape des offres LinkedIn selon le métier et la localisation.
+    Retourne une liste de dictionnaires compatible avec bot.py.
     """
     offers = []
     driver = None
@@ -251,7 +142,7 @@ def scrape_offers(job_type: str, location: str) -> list:
         )
 
         options = Options()
-        # options.add_argument("--headless=new")  # à activer plus tard si besoin
+        # options.add_argument("--headless=new")  # optionnel plus tard
 
         driver = webdriver.Chrome(options=options)
         driver.maximize_window()
@@ -268,7 +159,7 @@ def scrape_offers(job_type: str, location: str) -> list:
         cards = driver.find_elements(By.CSS_SELECTOR, "div.base-search-card")
 
         # Première passe : récupérer les informations visibles sur la page de recherche
-        for card in cards[:5]:
+        for card in cards[:MAX_OFFERS]:
             title = safe_text(card, [
                 "h3.base-search-card__title",
                 "h3",
@@ -291,7 +182,7 @@ def scrape_offers(job_type: str, location: str) -> list:
                 job_url = card.find_element(
                     By.CSS_SELECTOR, "a.base-card__full-link"
                 ).get_attribute("href")
-            except:
+            except Exception:
                 job_url = ""
 
             offers.append({
@@ -325,4 +216,3 @@ def scrape_offers(job_type: str, location: str) -> list:
             driver.quit()
 
     return offers
-        
