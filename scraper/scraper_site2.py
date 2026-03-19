@@ -1,162 +1,56 @@
-"""
-scraper_site2.py - Groupe 3 : Scraping du site 2 (Scraping de Welcome to the Jungle)
+from wttj import scrape_offers
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 
-Format de retour attendu par bot.py :
-[
-    {
-        "title": "Titre du poste",
-        "company": "Nom de l'entreprise",
-        "location": "Ville",
-        "description": "Description complète",
-        "url": "lien vers l'offre"
-    },
-    ...
-]
-"""
+EXCEL_PATH = "wttj_jobs_data.xlsx"
+COLUMNS    = ["Intitulé du poste", "Entreprise", "Ville", "Description", "URL"]
+COL_WIDTHS = [35, 25, 20, 70, 50]
 
-from urllib.parse import quote
-import time
-import re
-
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
+HEADER_FILL   = PatternFill("solid", start_color="2E75B6", end_color="2E75B6")
+HEADER_FONT   = Font(bold=True, color="FFFFFF", name="Arial", size=11)
+ROW_FILL_ODD  = PatternFill("solid", start_color="EBF3FB", end_color="EBF3FB")
+ROW_FILL_EVEN = PatternFill("solid", start_color="FFFFFF", end_color="FFFFFF")
+CELL_FONT     = Font(name="Arial", size=10)
+BORDER        = Border(*[Side(style="thin", color="BDD7EE")] * 0,
+                       left=Side(style="thin", color="BDD7EE"),
+                       right=Side(style="thin", color="BDD7EE"),
+                       top=Side(style="thin", color="BDD7EE"),
+                       bottom=Side(style="thin", color="BDD7EE"))
 
 
-def clean_text(text: str) -> str:
-    """Nettoie un texte en supprimant les blocs parasites de WTTJ."""
-    if not text:
-        return ""
-    text = re.sub(r"D['']autres offres.*", "", text, flags=re.DOTALL)
-    text = re.sub(r"Voir plus\s*$", "", text, flags=re.MULTILINE)
-    return " ".join(text.split())
+def save_to_excel(offers: list, path: str = EXCEL_PATH):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Offres emplois"
+    ws.freeze_panes = "A2"
+
+    for col_idx, (header, width) in enumerate(zip(COLUMNS, COL_WIDTHS), start=1):
+        cell = ws.cell(row=1, column=col_idx, value=header)
+        cell.font      = HEADER_FONT
+        cell.fill      = HEADER_FILL
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        cell.border    = BORDER
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
+    ws.row_dimensions[1].height = 30
+
+    for row_idx, offer in enumerate(offers, start=2):
+        values = [offer.get("title", ""), offer.get("company", ""),
+                  offer.get("location", ""), offer.get("description", ""),
+                  offer.get("url", "")]
+        fill = ROW_FILL_ODD if row_idx % 2 != 0 else ROW_FILL_EVEN
+        for col_idx, value in enumerate(values, start=1):
+            cell = ws.cell(row=row_idx, column=col_idx, value=value)
+            cell.font      = CELL_FONT
+            cell.fill      = fill
+            cell.border    = BORDER
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+        ws.row_dimensions[row_idx].height = 80
+
+    wb.save(path)
+    print(f"{len(offers)} offres sauvegardées dans {path}")
 
 
-def get_description(driver) -> str:
-    """Récupère la description d'une offre depuis la page de détail WTTJ."""
-    desc, prof = [], []
-    DESC_KW = {"poste", "mission", "description", "rôle", "role", "responsabilit"}
-    PROF_KW = {"profil", "vous", "candidat", "compétence", "expérience", "requis"}
-
-    for section in driver.find_elements(By.CSS_SELECTOR, "section, [data-testid*='section']"):
-        try:
-            header = section.find_element(By.CSS_SELECTOR, "h2,h3,h4").text.lower()
-        except:
-            continue
-        if any(k in header for k in DESC_KW):
-            desc.append(section.text.strip())
-        elif any(k in header for k in PROF_KW):
-            prof.append(section.text.strip())
-
-    if not desc:
-        for sel in ["[data-testid*='description']", "article", "main"]:
-            try:
-                el = driver.find_element(By.CSS_SELECTOR, sel)
-                if el.text.strip():
-                    desc.append(el.text.strip())
-                    break
-            except:
-                pass
-
-    return clean_text("\n\n".join(desc + prof))
-
-
-def scrape_offers(job_type: str, location: str) -> list:
-    """Scrape les offres WTTJ selon un mot-clé et une localisation."""
-    offers = []
-    driver = None
-
-    try:
-        search_url = (
-            "https://www.welcometothejungle.com/fr/jobs"
-            f"?refinementList%5Boffices.country_code%5D%5B%5D=FR&query={quote(job_type)}"
-        )
-
-        options = Options()
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_argument("--start-maximized")
-        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option("useAutomationExtension", False)
-
-        driver = webdriver.Chrome(options=options)
-        driver.execute_cdp_cmd(
-            "Page.addScriptToEvaluateOnNewDocument",
-            {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"},
-        )
-        driver.get(search_url)
-
-        WebDriverWait(driver, 25).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='/jobs/']"))
-        )
-        time.sleep(3)
-
-        # Collecte des liens d'offres
-        links = []
-        for a in driver.find_elements(By.CSS_SELECTOR, "a[href]"):
-            try:
-                href = a.get_attribute("href") or ""
-                if re.search(r"/companies/.+/jobs/", href) and href not in links:
-                    links.append(href)
-                    if len(links) >= 30:
-                        break
-            except:
-                pass
-
-        # Scraping de chaque offre
-        for url in links:
-            try:
-                driver.get(url)
-                WebDriverWait(driver, 20).until(
-                    lambda d: d.execute_script("return document.readyState") == "complete"
-                )
-                WebDriverWait(driver, 15).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "h1, h2, main"))
-                )
-                time.sleep(2)
-
-                title = ""
-                for sel in ["h1", "h2", "[data-testid*='title']"]:
-                    try:
-                        el = driver.find_element(By.CSS_SELECTOR, sel)
-                        if el.text.strip():
-                            title = el.text.strip()
-                            break
-                    except:
-                        pass
-
-                company = re.search(r"/companies/([^/]+)/", url)
-                company = company.group(1).replace("-", " ").title() if company else ""
-
-                city = re.search(r"_([a-zà-ü\-]+)(?:_[A-Z]{2,}|$)", url)
-                city = city.group(1).replace("-", " ").title() if city else ""
-
-                if not title or not company:
-                    continue
-
-                offers.append({
-                    "title":       title,
-                    "company":     company,
-                    "location":    city,
-                    "description": get_description(driver),
-                    "url":         url,
-                })
-
-                time.sleep(2)
-
-            except Exception:
-                continue
-
-    except Exception as e:
-        print("Erreur dans scrape_offers :", e)
-
-    finally:
-        if driver is not None:
-            driver.quit()
-
-    return offers
+if _name_ == "_main_":
+    offers = scrape_offers(job_type="data", location="France")
+    save_to_excel(offers)
