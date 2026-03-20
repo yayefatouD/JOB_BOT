@@ -13,7 +13,7 @@ Ce module collecte des offres d'emploi depuis le site **Welcome to the Jungle** 
 ## 📁 Fichier concerné
 
 ```
-scraper_wttj.py
+scraper_site2.py
 ```
 
 ---
@@ -68,7 +68,7 @@ En cas d'erreur, le dictionnaire contient uniquement une clé `"erreur"` :
 La seule fonction à appeler depuis `bot.py` est :
 
 ```python
-from scraper_wttj import scrape_offres
+from scraper_site2 import scrape_offres
 
 resultats = scrape_offres(mots_cles="Data Analyst", localisation="Paris")
 ```
@@ -93,7 +93,7 @@ Pensez à mettre à jour `requirements.txt` après installation et à prévenir 
 ## ▶️ Test rapide en ligne de commande
 
 ```bash
-python scraper_wttj.py
+python scraper_site2.py
 ```
 
 Le script demandera les mots-clés et la ville, puis affichera les résultats dans le terminal.
