@@ -1,10 +1,10 @@
 """
-Scraping de Welcome to the Jungle
+Scraping du site : **Welcome to the Jungle (WTTJ)**
 
-Ce fichier récupère des offres d'emploi depuis le site Welcome to the Jungle (WTTJ).
+Ce fichier récupère des offres d'emploi depuis le site Welcome to the Jungle.
 Il utilise Selenium pour piloter un navigateur Chrome.
 
-Format de retour (dictionnaire) :
+Format de sortie des données (dictionnaire) :
 {
     "source": "Welcome to the Jungle",
     "mots_cles": "...",
@@ -27,9 +27,7 @@ Format de retour (dictionnaire) :
 from urllib.parse import quote
 import time
 import re
-
 from selenium import webdriver
-
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -71,11 +69,8 @@ PROFIL_KEYWORDS = {"profil", "vous", "candidat", "compétence", "expérience", "
 
 def nettoyer_texte(texte: str) -> str:
     """
-    Nettoie un texte brut extrait d'une page WTTJ.
-
     Problèmes corrigés :
-      - Blocs parasites ("D'autres offres vous correspondent", "Voir plus") ajoutés
-        automatiquement par WTTJ en fin de contenu
+      - Blocs parasites ("D'autres offres vous correspondent", "Voir plus") ajoutés automatiquement en fin de contenu
       - Sauts de ligne multiples qui rendent le texte difficile à lire/stocker
       - Espaces en trop en début et fin de chaîne
     """
@@ -106,10 +101,8 @@ def extraire_description(driver) -> str:
     Extrait la description complète d'une offre depuis la page actuellement ouverte.
 
     Stratégie en deux étapes :
-      1. Cherche des <section> dont le titre contient des mots-clés métier
-         (ex : "Missions du poste", "Profil recherché") → méthode précise
-      2. Si rien n'est trouvé, utilise des sélecteurs génériques (article, main)
-         pour ne pas repartir les mains vides → méthode de secours (fallback)
+      1. Cherche des <section> dont le titre contient des mots-clés métier (ex : "Missions du poste", "Profil recherché")
+      2. Si rien n'est trouvé, utilise des sélecteurs génériques (article, main) pour ne pas repartir les mains vides
     """
     blocs_description = []  # Stocke les sections liées au poste
     blocs_profil      = []  # Stocke les sections liées au profil candidat
@@ -189,23 +182,13 @@ def extraire_ville_depuis_page(driver) -> str:
 # ---------------------------------------------------------------------------
 
 def extraire_ville_depuis_url(url: str) -> str:
-    """
-    Extrait la ville depuis le slug de l'URL WTTJ quand la page HTML ne suffit pas.
+    #Extrait la ville depuis le slug de l'URL WTTJ quand la page HTML ne suffit pas.
 
-    Structure typique d'une URL WTTJ :
-      .../companies/acme/jobs/123456_data-analyst_paris_FR
-                                                  ^^^^^
-                                                  ville extraite ici
-
-    La regex cherche un groupe de lettres minuscules (avec accents et tirets)
-    suivi d'un code pays en majuscules (FR, BE...) ou de la fin de l'URL.
-    """
     correspondance = re.search(r"_([a-zà-ü\-]+)(?:_[A-Z]{2,}|$)", url)
     if correspondance:
         # Remplace les tirets par des espaces et met en forme titre (ex : "ile-de-france" → "Ile De France")
         return correspondance.group(1).replace("-", " ").title()
     return ""  # Aucune ville détectable dans l'URL
-
 
 # ---------------------------------------------------------------------------
 # FONCTION : configurer_driver
@@ -213,15 +196,9 @@ def extraire_ville_depuis_url(url: str) -> str:
 # ---------------------------------------------------------------------------
 
 def configurer_driver() -> webdriver.Chrome:
-    """
-    Initialise Chrome avec des options pensées pour contourner la détection anti-bot.
-
-    WTTJ (comme beaucoup de sites) bloque les navigateurs automatisés détectés
-    via des empreintes JavaScript (navigator.webdriver = true) ou des en-têtes suspects.
-    Ces options rendent Chrome moins détectable.
-    """
+    #Initialise Chrome avec des options pensées pour contourner la détection anti-bot.
+    
     options = Options()
-
     # Nécessaire dans les environnements Linux sans interface graphique (serveurs, CI)
     options.add_argument("--no-sandbox")
 
@@ -236,10 +213,7 @@ def configurer_driver() -> webdriver.Chrome:
 
     # Remplace le user-agent par celui d'un Chrome standard Windows
     # Sans ça, le user-agent contient "HeadlessChrome" ou "Selenium", facilement détectable
-    options.add_argument(
-        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-    )
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) " "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
 
     # Supprime les indicateurs visuels d'automatisation dans Chrome (bandeau, icônes)
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -253,13 +227,10 @@ def configurer_driver() -> webdriver.Chrome:
     # Injecte du JavaScript exécuté à chaque nouveau chargement de page
     # Ce script redéfinit navigator.webdriver pour retourner undefined au lieu de true
     # Certains sites vérifient cette propriété pour détecter Selenium
-    driver.execute_cdp_cmd(
-        "Page.addScriptToEvaluateOnNewDocument",
-        {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"},
-    )
+    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument",
+        {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"},)
 
     return driver  # Retourne le driver prêt à être utilisé
-
 
 # ---------------------------------------------------------------------------
 # FONCTION : collecter_liens_offres
@@ -269,17 +240,10 @@ def configurer_driver() -> webdriver.Chrome:
 def collecter_liens_offres(driver, max_offres: int = MAX_OFFRES) -> list:
     """
     Collecte les liens vers les offres d'emploi depuis la page de résultats WTTJ.
-
-    Pourquoi scroller ?
-      WTTJ utilise le "scroll infini" : les offres ne sont pas toutes chargées
-      d'un coup, elles apparaissent au fur et à mesure que l'utilisateur descend.
-      Le script simule ce scroll pour forcer le chargement des offres suivantes.
-
-    Protection contre les doublons :
-      Un set() (ensemble) est utilisé pour stocker les URLs, ce qui garantit
-      automatiquement qu'aucune URL n'est collectée deux fois.
+    Le script simule ce scroll pour forcer le chargement des offres suivantes.
+    Un set() (ensemble) est utilisé pour stocker les URLs, ce qui garantit automatiquement qu'aucune URL n'est collectée deux fois.
     """
-    liens_collectes  = set()  # Ensemble d'URLs uniques (les doublons sont ignorés automatiquement)
+    liens_collectes  = set()  # Ensemble d'URLs uniques
     derniere_hauteur = 0      # Mémorise la hauteur de page précédente pour détecter la fin du scroll
 
     print(f"  Collecte des liens (objectif : {max_offres} offres)...")
@@ -303,7 +267,7 @@ def collecter_liens_offres(driver, max_offres: int = MAX_OFFRES) -> list:
         if len(liens_collectes) >= max_offres:
             break
 
-        # Récupère la hauteur totale actuelle de la page (en pixels) avant de scroller
+        # Récupère la hauteur totale actuelle de la page avant de scroller
         nouvelle_hauteur = driver.execute_script("return document.body.scrollHeight")
 
         # Simule un scroll jusqu'en bas de la page via JavaScript
@@ -336,13 +300,10 @@ def collecter_liens_offres(driver, max_offres: int = MAX_OFFRES) -> list:
 
 def scraper_offre(driver, url: str) -> dict | None:
     """
-    Visite la page d'une offre WTTJ et extrait ses informations clés.
-
     Gestion des erreurs :
-      Si la page met trop de temps à charger (TimeoutException), le script
-      réessaie jusqu'à MAX_RETRIES fois avant d'abandonner cette offre.
+      Si la page met trop de temps à charger (TimeoutException), le script réessaie jusqu'à MAX_RETRIES fois avant d'abandonner cette offre.
       Toute autre erreur abandonne immédiatement l'offre sans planter le programme.
-
+      
     Retourne None si les données minimales (titre + entreprise) sont introuvables.
     """
     # Boucle de retry : tente MAX_RETRIES fois en cas de timeout
@@ -353,15 +314,11 @@ def scraper_offre(driver, url: str) -> dict | None:
 
             # Attend que le navigateur ait fini d'exécuter tout le JavaScript de la page
             # document.readyState == "complete" signifie que tout le contenu est chargé
-            WebDriverWait(driver, OFFRE_LOAD_WAIT).until(
-                lambda d: d.execute_script("return document.readyState") == "complete"
-            )
+            WebDriverWait(driver, OFFRE_LOAD_WAIT).until(lambda d: d.execute_script("return document.readyState") == "complete")
 
             # Attend en plus qu'au moins un élément de contenu soit présent dans le DOM
             # (h1 = titre principal, h2 = titre secondaire, main = contenu principal)
-            WebDriverWait(driver, 15).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "h1, h2, main"))
-            )
+            WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1, h2, main")))
 
             # Pause supplémentaire pour laisser les éléments dynamiques se rendre complètement
             time.sleep(OFFRE_PAUSE)
@@ -400,16 +357,13 @@ def scraper_offre(driver, url: str) -> dict | None:
             if not titre or not entreprise:
                 return None
 
-
             # --- Extraction de la ville ---
             # On essaie d'abord depuis la page HTML (plus précis), sinon depuis l'URL en fallback
             ville = extraire_ville_depuis_page(driver) or extraire_ville_depuis_url(url)
 
-
             # --- Extraction de la description ---
             # Délégué à la fonction dédiée qui gère les deux stratégies d'extraction
             description = extraire_description(driver)
-
 
             # Retourne le dictionnaire de l'offre avec toutes les données collectées
             return {
@@ -483,9 +437,7 @@ def scrape_offres(mots_cles: str, localisation: str) -> dict:
 
         # Attend que les premiers liens d'offres soient visibles dans la page
         # Sans cette attente, on risque de collecter 0 lien si le JS n'a pas encore rendu les résultats
-        WebDriverWait(driver, PAGE_LOAD_WAIT).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='/jobs/']"))
-        )
+        WebDriverWait(driver, PAGE_LOAD_WAIT).until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='/jobs/']")))
 
         # Pause supplémentaire pour s'assurer que tous les éléments JS sont bien rendus
         time.sleep(3)
@@ -532,10 +484,9 @@ def scrape_offres(mots_cles: str, localisation: str) -> dict:
         if driver is not None:
             driver.quit()
 
-
 # ---------------------------------------------------------------------------
 # Point d'entrée en ligne de commande
-# Ce bloc ne s'exécute que si on lance ce fichier directement : python scraper_wttj.py
+# Ce bloc ne s'exécute que si on lance ce fichier directement : python wttj.py
 # Il ne s'exécute PAS si le fichier est importé depuis un autre module (ex : bot.py)
 # ---------------------------------------------------------------------------
 
