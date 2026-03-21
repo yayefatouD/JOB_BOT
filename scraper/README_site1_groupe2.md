@@ -1,4 +1,4 @@
-# Module de Scraping - Groupe 2 (LinkedIn)
+# Module de Scraping - Site 1 - Groupe 2 (LinkedIn)
 
 ## Description du module
 Ce dossier contient le moteur de recherche et d'extraction de données développé par le Groupe 2. Son rôle exclusif est de naviguer de manière automatisée sur LinkedIn Jobs, de rechercher des offres correspondant à des critères spécifiques, et de renvoyer ces données formatées pour être exploitées par le bot Discord.
