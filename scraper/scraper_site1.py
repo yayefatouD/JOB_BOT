@@ -318,7 +318,7 @@ def scrape_offers(job_type: str, location: str) -> list:
     # Retour de la liste finale d'offres structurées au bot Discord.
     logger.info(f"Récupération terminée. {len(offers)} offres retournées.")
     return offers
- # À AJOUTER À LA FIN DU FICHIER (version corrigée)
+ 
 if __name__ == "__main__":
     # Test avec des exemples
     job = "developpeur"
