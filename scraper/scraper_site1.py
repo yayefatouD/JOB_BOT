@@ -318,3 +318,23 @@ def scrape_offers(job_type: str, location: str) -> list:
     # Retour de la liste finale d'offres structurées au bot Discord.
     logger.info(f"Récupération terminée. {len(offers)} offres retournées.")
     return offers
+ # À AJOUTER À LA FIN DU FICHIER (version corrigée)
+if __name__ == "__main__":
+    # Test avec des exemples
+    job = "developpeur"
+    location = "Paris"
+    
+    print(f"Recherche d'offres pour : {job} à {location}")
+    results = scrape_offers(job, location)
+    
+    print(f"\n[SUCCES] {len(results)} offres trouvees :\n")
+    
+    for i, offer in enumerate(results, 1):
+        print(f"--- Offre {i} ---")
+        print(f"Titre: {offer['title']}")
+        print(f"Entreprise: {offer['company']}")
+        print(f"Lieu: {offer['location']}")
+        print(f"URL: {offer['url']}")
+        if offer['description']:
+            print(f"Description: {offer['description'][:200]}...")
+        print()
