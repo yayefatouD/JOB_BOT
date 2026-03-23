@@ -122,4 +122,8 @@ async def aide(ctx):
 
 
 if __name__ == "__main__":
+    if not TOKEN:
+        print("ERREUR : le token Discord est manquant.")
+        print("Verifie que le fichier .env contient bien DISCORD_TOKEN=ton_token")
+        exit(1)
     bot.run(TOKEN)
