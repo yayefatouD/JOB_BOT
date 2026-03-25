@@ -26,8 +26,8 @@ Le script utilise **Selenium** pour piloter un navigateur Chrome, car WTTJ charg
 
 | Paramètre | Valeur |
 |---|---|
-| **Mot-clé de recherche** | `"data"` (codé en dur, non saisi) |
-| **Localisation** | France entière (pas de filtre géographique) |
+| **Mot-clé de recherche** | `"data"` |
+| **Localisation** | France entière |
 | **Nombre max d'offres** | 50 |
 
 ### Étapes principales
@@ -75,8 +75,8 @@ En cas d'erreur, le dictionnaire contient uniquement une clé `"erreur"` :
 
 | Fichier | Format | Colonnes |
 |---|---|---|
-| `offres_grpe3.csv` | CSV (UTF-8 BOM) | titre, entreprise, lieu, description, url |
-| `offres_grpe3.json` | JSON indenté | structure complète du dictionnaire |
+| `offres_grpe3.csv` | CSV | titre, entreprise, lieu, description, url |
+| `offres_grpe3.json` | JSON | structure complète du dictionnaire |
 
 ---
 
