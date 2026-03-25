@@ -1,32 +1,28 @@
 """
 Scraping du site : **Welcome to the Jungle (WTTJ)**
 
-Ce fichier récupère des offres d'emploi depuis le site Welcome to the Jungle.
-Il utilise Selenium pour piloter un navigateur Chrome.
+Paramètres fixes :
+  - Mot-clé de recherche : "data"
+  - Localisation        : toute la France
+  - Nombre max d'offres : 50
 
 Format de sortie des données (dictionnaire) :
-{
-    "source": "Welcome to the Jungle",
-    "mots_cles": "...",
-    "localisation": "...",
-    "nombre_offres": N,
-    "offres": [
-        {
+
             "titre": "Titre du poste",
             "entreprise": "Nom de l'entreprise",
             "lieu": "Ville",
             "description": "Description complète",
             "url": "lien vers l'offre"
-        },
-        ...
-    ]
-}
+
+Formats de sortie : "csv" et "json"
+
 """
 
-# quote() : encode les caractères spéciaux dans les URLs (ex : "Data Analyst" → "Data%20Analyst")
 from urllib.parse import quote
 import time
 import re
+import csv
+import json
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -43,14 +39,13 @@ from selenium.common.exceptions import (
 # Modifier ces valeurs pour ajuster le comportement global du scraper
 # ---------------------------------------------------------------------------
 
-MAX_OFFRES      = 100  # Nombre maximum d'offres à collecter au total
+MAX_OFFRES      = 50   # Nombre maximum d'offres à collecter au total
 SCROLL_PAUSE    = 2    # Secondes à attendre après chaque scroll
 OFFRE_PAUSE     = 2    # Secondes à attendre après l'ouverture d'une page d'offre individuelle
 MAX_RETRIES     = 2    # Nombre de nouvelles tentatives si une page d'offre échoue à charger
 PAGE_LOAD_WAIT  = 25   # Secondes max pour que la liste de résultats apparaisse au démarrage
 OFFRE_LOAD_WAIT = 20   # Secondes max pour que le contenu d'une offre individuelle se charge
 
-# URL de base de la page de recherche d'offres WTTJ
 BASE_URL = "https://www.welcometothejungle.com/fr/jobs"
 
 # Mots-clés présents dans les titres de sections HTML qui décrivent le poste
@@ -79,8 +74,9 @@ def nettoyer_texte(texte: str) -> str:
         return ""
 
     # Supprime tout ce qui suit "D'autres offres" jusqu'à la fin du texte
+    # Couvre toutes les variantes d'apostrophe : droite ('), courbe ('), typographique (')
     # re.DOTALL permet au "." de correspondre aussi aux sauts de ligne
-    texte = re.sub(r"D['']autres offres.*", "", texte, flags=re.DOTALL)
+    texte = re.sub(r"D['\u2019\u2018]autres offres.*", "", texte, flags=re.DOTALL)
 
     # Supprime "Voir plus" s'il apparaît seul en fin de ligne
     # re.MULTILINE fait que "$" correspond à la fin de chaque ligne (pas seulement la fin du texte)
@@ -484,6 +480,79 @@ def scrape_offres(mots_cles: str, localisation: str) -> dict:
         if driver is not None:
             driver.quit()
 
+
+# ---------------------------------------------------------------------------
+# FONCTION : exporter_csv
+# Rôle : sauvegarder les offres collectées dans un fichier CSV
+# ---------------------------------------------------------------------------
+
+def exporter_csv(resultats: dict, chemin_fichier: str = "offres_grpe3.csv") -> str:
+    """
+    Exporte les offres du dictionnaire de résultats vers un fichier CSV.
+    Colonnes : titre, entreprise, lieu, url, description
+    Retourne le chemin du fichier créé.
+    """
+    offres = resultats.get("offres", [])
+    if not offres:
+        print("Aucune offre à exporter en CSV.")
+        return ""
+
+    colonnes = ["titre", "entreprise", "lieu", "description", "url"]
+
+    with open(chemin_fichier, mode="w", newline="", encoding="utf-8-sig") as f:
+        writer = csv.DictWriter(f, fieldnames=colonnes)
+        writer.writeheader()
+        for offre in offres:
+            writer.writerow({
+                "titre":       offre.get("titre", ""),
+                "entreprise":  offre.get("entreprise", ""),
+                "lieu":        offre.get("lieu", ""),
+                "description": offre.get("description", ""),
+                "url":         offre.get("url", ""),
+            })
+
+    print(f"Export CSV terminé : {chemin_fichier} ({len(offres)} offres)")
+    return chemin_fichier
+
+
+# ---------------------------------------------------------------------------
+# FONCTION : exporter_json
+# Rôle : sauvegarder l'intégralité du dictionnaire de résultats en JSON
+# ---------------------------------------------------------------------------
+
+def exporter_json(resultats: dict, chemin_fichier: str = "offres_grpe3.json") -> str:
+    """
+    Exporte le dictionnaire de résultats complet dans un fichier JSON indenté.
+    La structure exportée est identique à celle retournée par scrape_offres().
+    Retourne le chemin du fichier créé.
+    """
+    with open(chemin_fichier, mode="w", encoding="utf-8") as f:
+        json.dump(resultats, f, ensure_ascii=False, indent=2, sort_keys=False)
+
+    print(f"Export JSON terminé : {chemin_fichier} ({resultats.get('nombre_offres', 0)} offres)")
+    return chemin_fichier
+
+
+# ---------------------------------------------------------------------------
+# FONCTION : scrape_et_exporter
+# Rôle : point d'entrée pour le bot — scraping + exports CSV/JSON
+# ---------------------------------------------------------------------------
+
+def scrape_et_exporter(mots_cles: str = "data", localisation: str = "") -> dict:
+    """
+    Fonction à appeler depuis le bot.
+    Lance le scraping puis exporte automatiquement en CSV et JSON.
+    Retourne le dictionnaire de résultats (utilisable directement par le bot).
+    Pas d'affichage console ni de pprint : sorties fichiers uniquement.
+    """
+    resultats = scrape_offres(mots_cles, localisation)
+
+    if "erreur" not in resultats:
+        exporter_csv(resultats)
+        exporter_json(resultats)
+
+    return resultats
+
 # ---------------------------------------------------------------------------
 # Point d'entrée en ligne de commande
 # Ce bloc ne s'exécute que si on lance ce fichier directement : python wttj.py
@@ -493,21 +562,19 @@ def scrape_offres(mots_cles: str, localisation: str) -> dict:
 if __name__ == "__main__":
     import pprint  # pprint affiche les dictionnaires imbriqués de façon lisible dans le terminal
 
-    # Demande les paramètres de recherche à l'utilisateur dans le terminal
-    mots_cles    = input("Entrez les mots-clés du poste recherché : ")
-    localisation = input("Entrez la ville (laisser vide pour toute la France) : ")
+    # Paramètres fixes — aucune saisie demandée à l'utilisateur
+    mots_cles    = "data"  # Mot-clé de recherche
+    localisation = ""      # Chaîne vide = toute la France (pas de filtre géographique)
 
     # Lance le scraping et stocke tous les résultats dans un dictionnaire
     resultats = scrape_offres(mots_cles, localisation)
 
-    # Affichage conditionnel selon le contenu du dictionnaire retourné
     if "erreur" in resultats:
-        # Le scraping a échoué : affiche le message d'erreur
         print(f"\nErreur : {resultats['erreur']}")
     else:
-        # Le scraping a réussi : affiche un résumé lisible offre par offre
+        # --- Format 1 : affichage console ---
         print(f"\nRésultats pour '{resultats['mots_cles']}' "
-              f"à '{resultats['localisation']}' "
+              f"— France entière "
               f"({resultats['nombre_offres']} offres) :\n")
 
         for i, offre in enumerate(resultats["offres"], start=1):
@@ -516,9 +583,14 @@ if __name__ == "__main__":
             print(f"  Entreprise : {offre['entreprise']}")
             print(f"  Lieu       : {offre['lieu']}")
             print(f"  URL        : {offre['url']}")
-            # Affiche uniquement les 200 premiers caractères pour ne pas surcharger le terminal
             print(f"  Description: {offre['description'][:200]}...")
             print("\n" + "-" * 60 + "\n")
 
-    # Affiche la structure complète du dictionnaire retourné (utile pour déboguer ou intégrer)
-    pprint.pprint(resultats)
+        # Affiche la structure complète du dictionnaire (utile pour déboguer ou intégrer)
+        pprint.pprint(resultats)
+
+        # --- Format 2 : export CSV ---
+        exporter_csv(resultats)
+
+        # --- Format 3 : export JSON ---
+        exporter_json(resultats)
