@@ -27,7 +27,7 @@ Ce module est une brique logicielle autonome conçue pour analyser un CV, identi
 
 ---
 
-## 🚀 Intégration (Guide pour le Groupe 1)
+## Guide d'intégration dans le bot.py (Pour le groupe 1)
 
 Le module a été conçu pour être intégré facilement dans le `bot.py` principal. Voici comment l'appeler :
 
