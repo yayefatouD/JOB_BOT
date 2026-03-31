@@ -5,7 +5,7 @@ Ce module est une brique logicielle autonome conçue pour analyser un CV, identi
 ## Fonctionnalités
 
 * **Analyse Sémantique** : Utilisation de `Sentence-BERT` (modèle multilingue) pour calculer la similarité entre le CV et les offres.
-* **Génération par IA** : Rédaction structurée via `Gemini 1.5 Flash` en suivant la méthode "Vous-Moi-Nous".
+* **Génération par IA** : Rédaction structurée via `Gemini 2.5 Flash` en suivant la méthode "Vous-Moi-Nous".
 * **Sortie LaTeX** : Production d'un code source `.tex` complet, prêt à être compilé dans Overleaf.
 * **Système de Cache** : Optimisation des performances via la mise en cache des embeddings locaux.
 
@@ -13,7 +13,7 @@ Ce module est une brique logicielle autonome conçue pour analyser un CV, identi
 
 ## 🛠️ Installation
 
-1.  **Cloner le projet** (assurez-vous d'avoir le dossier `groupe_5` à la racine).
+1.  **Cloner le projet** (assurez-vous d'avoir le dossier `llm_handler` à la racine).
 2.  **Installer les dépendances** :
     ```bash
     pip install -r requirements.txt
