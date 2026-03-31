@@ -20,7 +20,7 @@ Ce module est une brique logicielle autonome conçue pour analyser un CV, identi
     ```
 3.  **Configuration des clés API** :
     * Copiez le fichier `.env.example` et renommez-le en `.env`.
-    * Ajoutez votre clé API Gemini (liée au mail du bot) :
+    * Ajoutez votre clé API Gemini :
         ```text
         GEMINI_API_KEY=votre_cle_ici
         ```
@@ -32,8 +32,8 @@ Ce module est une brique logicielle autonome conçue pour analyser un CV, identi
 Le module a été conçu pour être intégré facilement dans le `bot.py` principal. Voici comment l'appeler :
 
 ```python
-from groupe_5.embeddings import EmbeddingEngine
-from groupe_5.generator import LetterGenerator
+from llm_handler.embeddings import EmbeddingEngine
+from llm_handler_5.generator import LetterGenerator
 
 # 1. Initialisation (à faire une seule fois au lancement du bot)
 engine = EmbeddingEngine()
