@@ -35,6 +35,8 @@ Le module a été conçu pour être intégré facilement dans le `bot.py` princi
 from llm_handler.embeddings import EmbeddingEngine
 from llm_handler_5.generator import LetterGenerator
 
+# Prenez la trame dans le fichier main (posté à la racine du projet)
+
 # 1. Initialisation (à faire une seule fois au lancement du bot)
 engine = EmbeddingEngine()
 generator = LetterGenerator()
