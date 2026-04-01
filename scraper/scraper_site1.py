@@ -51,7 +51,6 @@ logger = logging.getLogger(__name__)
 # --- CONSTANTES ---
 MAX_OFFERS = 5
 
-# Dossier de sortie partagé entre les groupes.
 # Le Groupe 5 doit lire depuis ce même chemin.
 OUTPUT_DIR = Path(__file__).parent.parent  # racine du projet : bot-emploi-discord/
 OUTPUT_JSON = OUTPUT_DIR / "offers.json"
@@ -205,7 +204,8 @@ def scrape_offers(job_type: str, location: str) -> list:
     logger.info(f"Début de la récupération des offres pour '{job_type}' à '{location}'.")
     offers = []
     driver = None
-
+    seen_urls = set()
+    
     try:
         keywords_encoded = quote(job_type)
         location_encoded = quote(location)
@@ -219,11 +219,8 @@ def scrape_offers(job_type: str, location: str) -> list:
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--log-level=3")
-
-        driver = webdriver.Chrome(options=options)
-        driver.maximize_window()
-
-        driver.get(search_url)
+        options.add_argument("--window-size=1920,1080")        
+        
 
         wait = WebDriverWait(driver, 15)
         try:
@@ -262,8 +259,18 @@ def scrape_offers(job_type: str, location: str) -> list:
                 ).get_attribute("href")
             except NoSuchElementException:
                 job_url = ""
-
-            offers.append({
+                
+            if job_url and job_url in seen_urls:
+               continue
+            if job_url:
+               seen_urls.add(job_url)
+                
+            if len(offers) >= MAX_OFFERS:
+               break    
+            if not title and not company and not job_location and not job_url:
+               continue    
+                
+                offers.append({
                 "title": title,
                 "company": company,
                 "location": job_location,
