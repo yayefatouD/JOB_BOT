@@ -53,4 +53,4 @@ best_job = df_jobs.iloc[results[0]["index"]]
 lettre_latex = generator.generate(cv_text, best_job["description"])
 
 # 4. Sauvegarde locale (Optionnel)
-generator.save_latex(lettre_latex, "nom_du_fichier")
+generator.save_latex(lettre_latex, "nom_du_fichier") 
