@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Charger les variables du fichier .env
+# Charger toutes les variables du fichier .env
 load_dotenv()
 
 class EmbeddingConfig:
