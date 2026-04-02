@@ -219,8 +219,10 @@ def scrape_offers(job_type: str, location: str) -> list:
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--log-level=3")
-        options.add_argument("--window-size=1920,1080")        
+        options.add_argument("--window-size=1920,1080")
         
+        driver = webdriver.Chrome(options=options)
+        driver.get(search_url)
 
         wait = WebDriverWait(driver, 15)
         try:
@@ -270,7 +272,7 @@ def scrape_offers(job_type: str, location: str) -> list:
             if not title and not company and not job_location and not job_url:
                continue    
                 
-                offers.append({
+            offers.append({
                 "title": title,
                 "company": company,
                 "location": job_location,
