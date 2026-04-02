@@ -554,6 +554,27 @@ def scrape_et_exporter(mots_cles: str = "data", localisation: str = "") -> dict:
     return resultats
 
 # ---------------------------------------------------------------------------
+# FONCTION : scrape_offers
+# Rôle : interface standardisée appelée par le bot
+# ---------------------------------------------------------------------------
+
+def scrape_offers(job_type: str, location: str) -> list:
+
+    resultat = scrape_et_exporter()
+
+    return [
+        {
+            "title":       o["titre"],
+            "company":     o["entreprise"],
+            "location":    o["lieu"],
+            "description": o["description"],
+            "url":         o["url"],
+        }
+        for o in resultat.get("offres", [])
+    ]
+
+
+# ---------------------------------------------------------------------------
 # Point d'entrée en ligne de commande
 # Ce bloc ne s'exécute que si on lance ce fichier directement : python wttj.py
 # Il ne s'exécute PAS si le fichier est importé depuis un autre module (ex : bot.py)
