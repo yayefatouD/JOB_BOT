@@ -33,7 +33,7 @@ class LetterGenerator:
         5. Ne précise jamais le VOUS-MOI-NOUS
 
         TON ET STYLE :
-        - Assertif, factuel, professionnel (250-300 mots).
+        - Assertif, factuel, professionnel, direct, précis et rigoureux (250-300 mots).
         - Paragraphes courts, utilisation de listes à puces (\begin{{itemize}}).
 
         CONSIGNES LATEX :
