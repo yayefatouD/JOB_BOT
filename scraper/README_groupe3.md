@@ -28,13 +28,13 @@ Le script utilise **Selenium** pour piloter un navigateur Chrome, car WTTJ charg
 |---|---|
 | **Mot-clé de recherche** | `"data"` |
 | **Localisation** | France entière |
-| **Nombre max d'offres** | 50 |
+| **Nombre max d'offres** | 10 |
 
 ### Étapes principales
 
 1. Construction de l'URL de recherche (mot-clé `"data"`, France entière)
 2. Lancement de Chrome avec des options anti-détection bot
-3. Scroll infini sur la page de résultats pour collecter jusqu'à **50 liens d'offres**
+3. Scroll infini sur la page de résultats pour collecter jusqu'à **10 liens d'offres**
 4. Visite individuelle de chaque offre pour en extraire le contenu
 5. Export automatique en CSV et JSON + retour du dictionnaire structuré
 
@@ -123,10 +123,10 @@ Le script lance directement la recherche sur `"data"` / France entière, affiche
 
 | Sujet | Détail |
 |---|---|
-| **Temps d'exécution** | Compter ~8-15 min pour 50 offres (chaque page est visitée individuellement) |
+| **Temps d'exécution** | Compter ~2-5 min pour 10 offres (chaque page est visitée individuellement) |
 | **Détection anti-bot** | Le script simule un vrai navigateur, mais WTTJ peut bloquer en cas d'abus |
 | **Localisation** | Pas de filtre géographique : toutes les offres en France sont remontées |
-| **Nombre d'offres** | Le site n'affiche pas toujours 50 offres selon les mots-clés recherchés |
+| **Nombre d'offres** | Le site n'affiche pas toujours 10 offres selon les mots-clés recherchés |
 
 ---
 
