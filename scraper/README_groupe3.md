@@ -51,7 +51,7 @@ La fonction principale `scrape_offres()` retourne un **dictionnaire Python** :
     "source": "Welcome to the Jungle",
     "mots_cles": "data",
     "localisation": "",
-    "nombre_offres": 50,
+    "nombre_offres": 10,
     "offres": [
         {
             "titre": "Data Engineer",
@@ -135,7 +135,7 @@ Le script lance directement la recherche sur `"data"` / France entière, affiche
 Les constantes en haut du fichier permettent d'ajuster le comportement sans toucher à la logique :
 
 ```python
-MAX_OFFRES      = 50   # Nombre max d'offres à collecter
+MAX_OFFRES      = 10   # Nombre max d'offres à collecter
 SCROLL_PAUSE    = 2    # Pause entre chaque scroll (secondes)
 MAX_RETRIES     = 2    # Tentatives en cas d'échec sur une offre
 PAGE_LOAD_WAIT  = 25   # Timeout chargement de la liste (secondes)
