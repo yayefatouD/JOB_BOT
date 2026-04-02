@@ -4,7 +4,7 @@ Scraping du site : **Welcome to the Jungle (WTTJ)**
 Paramètres fixes :
   - Mot-clé de recherche : "data"
   - Localisation        : toute la France
-  - Nombre max d'offres : 50
+  - Nombre max d'offres : 10
 
 Format de sortie des données (dictionnaire) :
 
@@ -23,6 +23,7 @@ import time
 import re
 import csv
 import json
+from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -34,12 +35,11 @@ from selenium.common.exceptions import (
     StaleElementReferenceException,  # L'élément existait mais a disparu du DOM depuis (page rechargée)
 )
 
-
 # ---------------------------------------------------------------------------
 # Modifier ces valeurs pour ajuster le comportement global du scraper
 # ---------------------------------------------------------------------------
 
-MAX_OFFRES      = 50   # Nombre maximum d'offres à collecter au total
+MAX_OFFRES      = 10   # Nombre maximum d'offres à collecter au total
 SCROLL_PAUSE    = 2    # Secondes à attendre après chaque scroll
 OFFRE_PAUSE     = 2    # Secondes à attendre après l'ouverture d'une page d'offre individuelle
 MAX_RETRIES     = 2    # Nombre de nouvelles tentatives si une page d'offre échoue à charger
@@ -47,6 +47,11 @@ PAGE_LOAD_WAIT  = 25   # Secondes max pour que la liste de résultats apparaisse
 OFFRE_LOAD_WAIT = 20   # Secondes max pour que le contenu d'une offre individuelle se charge
 
 BASE_URL = "https://www.welcometothejungle.com/fr/jobs"
+
+# Dossier de sortie aligné sur le Groupe 2 : racine du projet (bot-emploi-discord/)
+OUTPUT_DIR  = Path(__file__).parent.parent
+OUTPUT_CSV  = OUTPUT_DIR / "offers2.csv"
+OUTPUT_JSON = OUTPUT_DIR / "offers2.json"
 
 # Mots-clés présents dans les titres de sections HTML qui décrivent le poste
 # Utilisés pour identifier les blocs "description du poste" dans la page
@@ -170,7 +175,6 @@ def extraire_ville_depuis_page(driver) -> str:
             continue  # Ce sélecteur n'existe pas dans la page, on passe au suivant
 
     return ""  # Aucun sélecteur n'a fonctionné : on retourne une chaîne vide
-
 
 # ---------------------------------------------------------------------------
 # FONCTION : extraire_ville_depuis_url
@@ -318,7 +322,6 @@ def scraper_offre(driver, url: str) -> dict | None:
 
             # Pause supplémentaire pour laisser les éléments dynamiques se rendre complètement
             time.sleep(OFFRE_PAUSE)
-
 
             # --- Extraction du titre du poste ---
             titre = ""
@@ -486,7 +489,7 @@ def scrape_offres(mots_cles: str, localisation: str) -> dict:
 # Rôle : sauvegarder les offres collectées dans un fichier CSV
 # ---------------------------------------------------------------------------
 
-def exporter_csv(resultats: dict, chemin_fichier: str = "offres_grpe3.csv") -> str:
+def exporter_csv(resultats: dict, chemin_fichier: Path = OUTPUT_CSV) -> str:
     """
     Exporte les offres du dictionnaire de résultats vers un fichier CSV.
     Colonnes : titre, entreprise, lieu, url, description
@@ -520,7 +523,7 @@ def exporter_csv(resultats: dict, chemin_fichier: str = "offres_grpe3.csv") -> s
 # Rôle : sauvegarder l'intégralité du dictionnaire de résultats en JSON
 # ---------------------------------------------------------------------------
 
-def exporter_json(resultats: dict, chemin_fichier: str = "offres_grpe3.json") -> str:
+def exporter_json(resultats: dict, chemin_fichier: Path = OUTPUT_JSON) -> str:
     """
     Exporte le dictionnaire de résultats complet dans un fichier JSON indenté.
     La structure exportée est identique à celle retournée par scrape_offres().
@@ -555,11 +558,19 @@ def scrape_et_exporter(mots_cles: str = "data", localisation: str = "") -> dict:
 
 # ---------------------------------------------------------------------------
 # FONCTION : scrape_offers
-# Rôle : interface standardisée appelée par le bot
+# Rôle : interface standardisée appelée par le bot — même signature que le Groupe 2
+# Les clés de sortie sont en anglais pour cohérence inter-groupes :
+#   title, company, location, description, url
 # ---------------------------------------------------------------------------
 
 def scrape_offers(job_type: str, location: str) -> list:
-
+    """
+    Fonction appelée par bot.py 
+    ----------
+    job_type : str  — type de poste (ex : "data") — ignoré ici, fixé à "data" en dur
+    location : str  — localisation souhaitée — ignoré ici, fixé à France entière
+    Retourne : list de dicts : [{"title": ..., "company": ..., "location": ..., "description": ..., "url": ...}, ...]
+    """
     resultat = scrape_et_exporter()
 
     return [
@@ -572,12 +583,10 @@ def scrape_offers(job_type: str, location: str) -> list:
         }
         for o in resultat.get("offres", [])
     ]
-
-
 # ---------------------------------------------------------------------------
 # Point d'entrée en ligne de commande
 # Ce bloc ne s'exécute que si on lance ce fichier directement : python wttj.py
-# Il ne s'exécute PAS si le fichier est importé depuis un autre module (ex : bot.py)
+# Il ne s'exécute pas si le fichier est importé depuis un autre module (ex : bot.py)
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
