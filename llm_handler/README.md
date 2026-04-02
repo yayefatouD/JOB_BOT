@@ -33,7 +33,7 @@ Le module a été conçu pour être intégré facilement dans le `bot.py` princi
 
 ```python
 from llm_handler.embeddings import EmbeddingEngine
-from llm_handler_5.generator import LetterGenerator
+from llm_handler.generator import LetterGenerator
 
 # Prenez la trame dans le fichier main (posté à la racine du projet)
 
