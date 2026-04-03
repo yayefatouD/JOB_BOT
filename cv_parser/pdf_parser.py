@@ -18,7 +18,6 @@ if not api_key:
 
 # 2. Configuration du NOUVEAU client Gemini
 client = genai.Client(api_key=api_key)
- 
 
 def extraire_et_restructurer_cv(chemin_pdf):
     """
