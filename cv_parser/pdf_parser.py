@@ -5,7 +5,7 @@ from PIL import Image
 from dotenv import load_dotenv
 from google import genai 
 
-# --- Configuration OCR pour Windows ---
+# Configuration OCR pour Windows 
 # N'oubliez pas d'installer le logiciel Tesseract-OCR sur le PC qui fait tourner ce code !
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
