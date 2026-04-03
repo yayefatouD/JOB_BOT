@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import os
 import unicodedata
 import pandas as pd
+import tempfile
 from pathlib import Path
 
 load_dotenv()
@@ -75,9 +76,20 @@ async def search_job(ctx, *, args: str = ""):
                 await ctx.send("CV detecte, extraction en cours...")
                 pdf_bytes = await attachment.read()
                 try:
-                    from cv_parser.pdf_parser import extract_text_from_pdf
-                    cv_text = extract_text_from_pdf(pdf_bytes)
-                    await ctx.send("CV extrait avec succes.")
+                    from cv_parser.pdf_parser import extraire_texte_cv
+                    # On sauvegarde temporairement le PDF sur disque
+                    # car la fonction du groupe 4 attend un chemin de fichier
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                        tmp.write(pdf_bytes)
+                        tmp_path = tmp.name
+                    resultat = extraire_texte_cv(tmp_path)
+                    os.remove(tmp_path)
+                    if resultat["statut"] == "succes":
+                        cv_text = resultat["texte_cv"]
+                        await ctx.send("CV extrait avec succes.")
+                    else:
+                        await ctx.send(f"Erreur extraction CV : {resultat['erreur']}")
+                        return
                 except Exception as e:
                     await ctx.send(f"Erreur extraction CV : {e}")
     else:
