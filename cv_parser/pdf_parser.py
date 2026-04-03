@@ -19,6 +19,37 @@ if not api_key:
 # 2. Configuration du NOUVEAU client Gemini
 client = genai.Client(api_key=api_key)
 
+def extraire_et_restructurer_cv(chemin_pdf):
+    """
+    Extrait le texte d'un CV avec PyMuPDF.
+    Basule sur l'OCR (Tesseract) si le PDF est une image.
+    Utilise ensuite Gemini pour réparer les problèmes de colonnes et de mise en page.
+    """
+    try:
+        # --- PHASE 1 : Extraction brute avec PyMuPDF et OCR ---
+        document = fitz.open(chemin_pdf)
+        texte_brut = ""
+        
+        for page_num, page in enumerate(document):
+            # On tente l'extraction texte normale
+            texte_page = page.get_text("text")
+            
+            # Si la page est (presque) vide de texte informatique, c'est une image/scanné
+            if len(texte_page.strip()) < 50:
+                print(f"Page {page_num + 1} détectée comme image. Lancement de l'OCR...")
+                
+                # On convertit la page en image HD
+                pixmap = page.get_pixmap(dpi=300)
+                image_pil = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
+                
+                # On lance la lecture optique
+                texte_page = pytesseract.image_to_string(image_pil, lang='fra+eng')
+                
+            texte_brut += texte_page + "\n"
+            
+        document.close()
+
+
 # --- Zone de test ---
 if __name__ == "__main__":
     fichier_test = r"C:\Users\alpha\OneDrive\Desktop\Conduite de projet\C-V Alpha Oumar DIALLO.pdf"
