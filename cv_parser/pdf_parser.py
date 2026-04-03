@@ -18,3 +18,18 @@ if not api_key:
 
 # 2. Configuration du NOUVEAU client Gemini
 client = genai.Client(api_key=api_key)
+
+# --- Zone de test ---
+if __name__ == "__main__":
+    fichier_test = r"C:\Users\alpha\OneDrive\Desktop\Conduite de projet\C-V Alpha Oumar DIALLO.pdf"
+    
+    print("--- 1. Lancement de l'extraction (PyMuPDF/OCR) et connexion à Gemini... ---")
+    resultat = extraire_et_restructurer_cv(fichier_test)
+    
+    if resultat["statut"] == "succes":
+        print("\n EXTRACTION ET RESTRUCTURATION RÉUSSIES !\n")
+        print("=== Voici le CV parfaitement organisé par l'IA ===")
+        print(resultat["texte_propre"])
+        print("==================================================")
+    else:
+        print(f"\n Échec : {resultat['erreur']}")
