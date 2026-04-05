@@ -1,0 +1,157 @@
+# Groupe 4 — CV Parser Pro
+**Membres :** Alpha Oumar DIALLO · Yaye Fatou GNINGUE · Antoine PACCHIONI · Rayhana BEN HIM
+
+---
+
+##  Objectif
+Ce module extrait le texte d'un CV au format PDF et le restructure proprement, puis le transmet au bot Discord sous forme de dictionnaire structuré, prêt à être exploité par les Groupes 1 et 5.
+
+---
+
+##  Fichier concerné
+```
+cv_parser.py
+```
+
+---
+
+##  Fonctionnement
+Le script traite chaque page du PDF en 3 phases automatiques :
+
+1. **Extraction PyMuPDF** — lecture du texte vectoriel page par page.
+2. **Fallback OCR** — si la page contient moins de 50 caractères, conversion en image HD (300 dpi) et lecture via Tesseract.
+3. **Restructuration Gemini** — le texte brut est envoyé à Gemini 2.5 Flash pour remettre les rubriques dans l'ordre (sans résumer ni inventer).
+
+| Paramètre | Valeur |
+|---|---|
+| Seuil détection image | < 50 caractères par page |
+| Résolution OCR | 300 dpi |
+| Langues OCR | `fra + eng` |
+| Modèle LLM | `gemini-2.5-flash` |
+
+---
+
+##  Format de sortie
+
+La fonction `extraire_et_restructurer_cv()` retourne toujours un dictionnaire Python :
+
+```python
+# Succès
+{
+    "statut": "succes",
+    "texte_propre":   "John DOE\nDéveloppeur Python\n...",
+    "texte_original": "texte brut avant restructuration",
+    "erreur": None
+}
+
+# Erreur
+{ "statut": "erreur", "texte_propre": "", "erreur": "Description de l'erreur." }
+```
+
+---
+
+##  Intégration dans bot.py
+
+### Pour le Groupe 5
+```python
+from cv_parser import extraire_et_restructurer_cv
+
+resultat = extraire_et_restructurer_cv("chemin/vers/cv.pdf")
+if resultat["statut"] == "succes":
+    texte_propre = resultat["texte_propre"]
+```
+
+### Pour le Groupe 1 (bot Discord)
+```python
+from cv_parser import extraire_et_restructurer_cv
+
+@bot.event
+async def on_message(message):
+    if message.attachments:
+        for attachment in message.attachments:
+            if attachment.filename.endswith(".pdf"):
+                await attachment.save(f"temp_{attachment.filename}")
+                resultat = extraire_et_restructurer_cv(f"temp_{attachment.filename}")
+                if resultat["statut"] == "succes":
+                    await message.channel.send(resultat["texte_propre"])
+```
+
+>  Ne pas utiliser `texte_propre` sans vérifier d'abord que `resultat["statut"] == "succes"`.
+
+---
+
+##  Installation
+
+### 1. Tesseract OCR (logiciel système)
+
+- **Windows :** Télécharger et installer depuis https://github.com/UB-Mannheim/tesseract/wiki
+- **Mac :** `brew install tesseract`
+- **Linux :** `sudo apt-get install tesseract-ocr tesseract-ocr-fra`
+
+> ⚠️ **Groupe 1 (serveur Linux) :** commenter la ligne du chemin Tesseract dans `cv_parser.py` — elle est inutile hors Windows.
+
+### 2. Dépendances Python
+
+Assurez-vous d'avoir activé l'environnement virtuel commun, puis :
+
+```bash
+pip install pymupdf pytesseract pillow python-dotenv google-genai
+```
+
+Pensez à mettre à jour `requirements.txt` et à prévenir les autres groupes sur Discord.
+
+### 3. Clé API
+
+Créer un fichier `.env` à la racine du projet :
+```
+GEMINI_API_KEY=votre_clé_api_google_ici
+```
+
+Obtenez une clé sur https://aistudio.google.com/app/apikey
+
+> ⚠️ Ne jamais pousser `.env` sur GitHub — l'ajouter au `.gitignore`.
+
+---
+
+##  Test rapide
+
+```bash
+python cv_parser.py
+```
+
+> ⚠️ Modifier le chemin du PDF dans le bloc `__main__` avant de tester.
+
+---
+
+## ⚠️ Points d'attention
+
+| Sujet | Détail |
+|---|---|
+| Temps d'exécution | ~5-15 sec par CV (appel API Gemini inclus) |
+| CV image | OCR forcé à 300 dpi pour une meilleure précision |
+| Quota API | Gemini 2.5 Flash a un quota gratuit limité |
+| Chemin Tesseract | Ligne à commenter sur Linux/Mac (Windows uniquement) |
+
+---
+
+##  Configuration rapide
+
+Les constantes en haut du fichier permettent d'ajuster le comportement sans toucher à la logique :
+
+```python
+SEUIL_OCR    = 50                   # Seuil de détection image (caractères)
+DPI_OCR      = 300                  # Résolution OCR
+LANG_OCR     = 'fra+eng'            # Langues Tesseract
+MODEL_GEMINI = 'gemini-2.5-flash'   # Modèle LLM
+```
+
+---
+
+##  Contributeurs — Groupe 4
+
+Module conçu et développé dans le cadre du projet JOB_BOT — Master Data Science.
+
+- **Alpha Oumar DIALLO**
+- **Yaye Fatou GNINGUE**
+- **Antoine PACCHIONI**
+- **Rayhana BEN HIM**
